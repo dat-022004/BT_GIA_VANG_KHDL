@@ -1,0 +1,7 @@
+pandas
+pyspark==3.5.1
+pyarrow
+fastparquet
+requests
+tqdm
+psutil
