@@ -1,84 +1,192 @@
-# Báo cáo quá trình thực hành
+# Hệ thống phân tích giá vàng bằng Pandas và PySpark
 
-## 1. Mục tiêu bài thực hành
-Bài thực hành tập trung so sánh hiệu năng và kiến trúc giữa Pandas và PySpark trên dữ liệu NYC Taxi.
+Repository này chứa một bài thực hành so sánh hai hướng xử lý dữ liệu:
 
-Các mục tiêu chính:
-- Hiểu sự khác nhau giữa xử lý in-memory trên 1 máy (Pandas) và xử lý phân tán (PySpark).
-- Thực hành dựng cụm Spark Standalone bằng Docker gồm 1 Master và 2 Worker.
-- Chạy pipeline tính toán doanh thu trung bình và thời gian di chuyển theo khung giờ.
+- `Pandas` cho phân tích cục bộ trong bộ nhớ.
+- `PySpark` cho xử lý phân tán với Docker Spark Cluster.
+- `Jupyter Lab` để chạy và trình bày kết quả trong notebook.
 
-## 2. Môi trường và dữ liệu
-- Workspace: thuc_hanh_1 
-- Docker Compose: 1 spark-master, 2 spark-worker
-- Dữ liệu: Yellow Taxi Parquet (thư mục data)
+## 1. Cấu trúc hệ thống
 
-# BTTH1_KHMT
+- `download_data.py`: tải dữ liệu giá vàng và tạo file benchmark lớn.
+- `docker-compose.yml`: dựng cụm Spark gồm `spark-master`, `spark-worker-1`, `spark-worker-2` và `jupyter`.
+- `data/`: chứa dữ liệu đầu vào và dữ liệu benchmark.
+- `thuyettrinh/`: chứa notebook phân tích.
 
-## Báo cáo quá trình thực hành
-Bài thực hành tập trung so sánh hiệu năng và kiến trúc giữa Pandas và PySpark trên dữ liệu NYC Taxi.
+### Thành phần Docker
 
-### Mục tiêu chính
-- Hiểu sự khác nhau giữa xử lý in-memory trên 1 máy (Pandas) và xử lý phân tán (PySpark).
-- Thực hành dựng cụm Spark Standalone bằng Docker gồm 1 Master và 2 Worker.
-- Chạy pipeline tính toán doanh thu trung bình và thời gian di chuyển theo khung giờ.
+- `spark-master`: cổng `7077` cho Spark và `8080` cho Spark Web UI.
+- `spark-worker-1`: Spark worker thứ nhất, Web UI tại `8081`.
+- `spark-worker-2`: Spark worker thứ hai, Web UI tại `8082`.
+- `jupyter`: Jupyter Lab tại `http://localhost:8888/lab`.
 
-### Môi trường và dữ liệu
-- Workspace: thuc_hanh_1 - Copy
-- Docker Compose: 1 spark-master, 2 spark-worker
-- Dữ liệu: Yellow Taxi Parquet (thư mục data)
+Token Jupyter trong file compose hiện tại là `vang2024`.
 
-### Quá trình thực hiện
-#### Bước 1: Chuẩn bị và chỉnh cấu hình Docker
-- Cập nhật image Spark sang apache/spark:3.5.1.
-- Cấu hình master và worker chạy đúng spark://spark-master:7077.
-- Xử lý xung đột cổng và dọn container cũ để cụm khởi động ổn định.
+## 2. Yêu cầu cài đặt
 
-#### Bước 2: Khởi chạy cụm Spark
-- Chạy docker-compose up -d.
-- Kiểm tra Spark Master UI hiển thị đủ 2 worker ở trạng thái ALIVE.
+- Docker Desktop đã bật.
+- Python 3.11 trở lên nếu muốn chạy script ngoài container.
+- Các thư viện trong `requirements.txt`.
 
-#### Bước 3: Chạy PySpark và xử lý lỗi tài nguyên
-- Ban đầu job bị WAITING do cấu hình tài nguyên chưa phù hợp.
-- Điều chỉnh executor memory xuống 1G, executor cores phù hợp với cụm 2 worker.
-- Job chuyển sang RUNNING và FINISHED.
+Nếu chạy trên Windows, nên mở PowerShell hoặc terminal VS Code ở thư mục gốc của dự án:
 
-#### Bước 4: Chạy Pandas
-- Chạy pandas_analysis.py trong môi trường .venv.
-- Bổ sung thiếu thư viện psutil vào requirements và cài lại.
-- Script Pandas chạy thành công, in kết quả và thống kê bộ nhớ.
+```powershell
+cd "E:\hoctap\khoa_hoc_MT\thuc_hanh_1 - Copy"
+```
 
-### Các lỗi chính và cách khắc phục
-- Lỗi kéo image bitnami/spark không tồn tại.
-  - Khắc phục: chuyển sang apache/spark:3.5.1.
-- Lỗi bind port đã được sử dụng.
-  - Khắc phục: chỉnh lại mapping cổng hoặc bỏ publish cổng worker.
-- Lỗi chạy PySpark từ Python local bị UnknownHostException spark-master.
-  - Khắc phục: chạy spark-submit bên trong container spark-master.
-- Lỗi thiếu psutil khi chạy Pandas.
-  - Khắc phục: cài psutil vào môi trường .venv.
+Nếu chạy từ WSL, đường dẫn tương đương là:
 
-### Kết quả đạt được
-- Cụm Spark hoạt động ổn định với 2 worker.
-- Job PySpark chạy phân tán, hoàn tất thành công và có lịch sử Completed Applications.
-- Pandas chạy thành công trên dữ liệu 1 tháng và xuất kết quả thống kê theo giờ.
-- Hoàn thành mục tiêu so sánh cách thực thi giữa Pandas và PySpark.
+```bash
+cd "/mnt/e/hoctap/khoa_hoc_MT/thuc_hanh_1 - Copy"
+```
 
-### Ảnh minh chứng
-#### 1. Kết quả chạy Pandas thành công trên terminal
-![Kết quả chạy Pandas](img/image.png)
+## 3. Cài đặt môi trường Python
 
-#### 2. Cấu hình docker-compose của cụm Spark
-![Cấu hình docker-compose](img/image copy 3.png)
+Tạo và kích hoạt virtual environment:
 
-#### 3. Spark Master UI sau khi cụm hoạt động
-![Spark Master UI - Completed Applications](img/image copy.png)
+```powershell
+python -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+& ".venv\Scripts\Activate.ps1"
+```
 
-#### 4. Kết quả chạy job PySpark trên terminal
-![Kết quả chạy PySpark trên terminal](img/image copy 2.png)
+Cài đặt dependencies:
 
-### Kết luận
-Qua bài thực hành, có thể thấy:
-- Pandas phù hợp dữ liệu vừa và nhỏ, thao tác nhanh trên 1 máy.
-- PySpark phù hợp dữ liệu lớn, tận dụng cụm phân tán để mở rộng tài nguyên.
-- Cấu hình tài nguyên Spark ảnh hưởng trực tiếp đến khả năng phân phối và thời gian xử lý.
+```powershell
+pip install -r requirements.txt
+```
+
+## 4. Tạo dữ liệu
+
+### 4.1 Tải dữ liệu gốc
+
+Script `download_data.py` sẽ tải dữ liệu lịch sử giá vàng và lưu vào `data/gold_prices_all.csv`.
+
+```powershell
+python download_data.py
+```
+
+### 4.2 Tạo dữ liệu benchmark lớn
+
+Để phục vụ so sánh Pandas vs Spark, script có thể tạo dataset synthetic kích thước lớn:
+
+```powershell
+python download_data.py --benchmark-rows 40000000
+```
+
+Kết quả đầu ra:
+
+- `data/gold_prices_all.csv`
+- `data/gold_prices_benchmark.parquet`
+
+## 5. Khởi động hệ thống bằng Docker
+
+Chạy toàn bộ stack:
+
+```powershell
+docker-compose up -d
+```
+
+Kiểm tra các container đang chạy:
+
+```powershell
+docker-compose ps
+```
+
+Theo dõi log của Jupyter:
+
+```powershell
+docker logs jupyter
+```
+
+### Truy cập giao diện
+
+- Jupyter Lab: `http://localhost:8888/lab`
+- Spark Master UI: `http://localhost:8080`
+- Spark Worker 1 UI: `http://localhost:8081`
+- Spark Worker 2 UI: `http://localhost:8082`
+
+## 6. Cách chạy notebook
+
+Notebook chính nằm trong `thuyettrinh/`.
+
+- `thuyettrinh/pandas_analysis.ipynb`: phân tích bằng Pandas.
+- `thuyettrinh/spark_analysis.ipynb`: phân tích bằng PySpark.
+- `thuyettrinh/chuong3.ipynb`: nội dung thuyết trình / lý thuyết.
+
+Trong Jupyter Lab:
+
+1. Mở `http://localhost:8888/lab`.
+2. Nhập token `vang2026`.
+3. Mở notebook trong thư mục `/home/jovyan/work`.
+4. Chạy tuần tự các cell từ trên xuống.
+
+### Lưu ý đường dẫn dữ liệu
+
+- Notebook Pandas và Spark nên đọc file bằng đường dẫn tương đối lên thư mục gốc, ví dụ `../data/gold_prices_benchmark.parquet`.
+- Nếu mở notebook từ thư mục `thuyettrinh/`, đường dẫn `data/...` sẽ dễ bị sai.
+
+## 7. Kết quả đạt được
+
+### 7.1 Kết quả dữ liệu
+
+- Đã tải dữ liệu giá vàng lịch sử vào `data/gold_prices_all.csv`.
+
+### 7.2 Kết quả Pandas
+
+Notebook Pandas thực hiện:
+
+- nạp dữ liệu vào RAM bằng `pd.read_parquet()`
+- làm sạch dữ liệu
+- tính `daily_return_pct`
+- group by theo tháng
+- xuất bảng thống kê và biểu đồ
+
+Điểm chính:
+
+- phù hợp khi dữ liệu vừa và nhỏ
+- thao tác đơn giản, dễ debug
+- phụ thuộc mạnh vào RAM máy local
+
+### 7.3 Kết quả PySpark
+
+Notebook Spark thực hiện:
+
+- khởi tạo `SparkSession`
+- đọc dữ liệu bằng Spark DataFrame
+- dùng `Window`, `groupBy`, `agg`, `collect`
+- hiển thị thống kê theo tháng, theo năm và các biểu đồ so sánh
+
+Điểm chính:
+
+- phù hợp khi dữ liệu lớn
+- có thể chạy trên cụm Docker nhiều worker
+- hỗ trợ lazy evaluation và phân tán tính toán
+
+## 8. Các tình huống thường gặp
+
+### Không mở được `http://localhost:8888/lab`
+
+- Kiểm tra Docker Desktop đã chạy chưa.
+- Kiểm tra container `jupyter` đã up chưa.
+- Xem log bằng `docker logs jupyter`.
+
+### Notebook báo không tìm thấy file dữ liệu
+
+- Đảm bảo đã chạy `download_data.py`.
+- Kiểm tra `data/gold_prices_benchmark.parquet` có tồn tại.
+- Mở notebook từ `thuyettrinh/` thì ưu tiên dùng `../data/...`.
+
+### SparkSession lỗi khi khởi tạo
+
+- Nếu chạy local, dùng `.master("local[*]")`.
+- Nếu dùng cluster Docker, đảm bảo container `spark-master` và workers đang chạy.
+- Xem log của Spark container để tìm lỗi kết nối hoặc port.
+
+## 9. Tóm tắt nhanh lệnh sử dụng
+
+```powershell
+cd "E:\hoctap\khoa_hoc_MT\thuc_hanh_1 - Copy"
+docker-compose up -d
+docker logs jupyter
+```

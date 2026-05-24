@@ -1,52 +1,73 @@
+"""
+Tải giá vàng Việt Nam (5 năm gần đây) → data/gold_prices_all.csv
+Nguồn: Yahoo Finance  GC=F (USD/oz) × USDVND=X → VNĐ/lượng
+Cột: Ngay | Nam | Gia_Mua | Gia_Ban | Gia_TrungBinh | Nguon
+
+Dùng: python download_data.py
+"""
+
 import os
+from datetime import datetime
+import pandas as pd
 import requests
-from tqdm import tqdm
 
-# URL base của NYC TLC Yellow Taxi (2024)
-BASE_URL = "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{year}-{month:02d}.parquet"
+# ── Cấu hình ──────────────────────────────────────────────────
+FILE_CSV      = os.path.join("data", "gold_prices_all.csv")
+SO_NAM        = 5                  # Số năm muốn lấy dữ liệu
+OZ_TREN_LUONG = 37.5 / 31.1035    # 1 lượng VN ≈ 1.2057 troy oz
+# ──────────────────────────────────────────────────────────────
 
-# Thư mục lưu dữ liệu
-DATA_DIR = "data"
 
-def download_file(url, filepath):
-    if os.path.exists(filepath):
-        print(f"File {filepath} đã tồn tại, bỏ qua...")
-        return
-    
-    print(f"Đang tải {url}...")
-    response = requests.get(url, stream=True)
-    
-    if response.status_code == 200:
-        total_size = int(response.headers.get('content-length', 0))
-        block_size = 1024 # 1 Kibibyte
-        progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True)
-        
-        with open(filepath, 'wb') as file:
-            for data in response.iter_content(block_size):
-                progress_bar.update(len(data))
-                file.write(data)
-        progress_bar.close()
-        
-        if total_size != 0 and progress_bar.n != total_size:
-            print("ERROR: Có lỗi xảy ra trong quá trình tải.")
-    else:
-        print(f"ERROR: Không thể tải file từ {url} (Status: {response.status_code})")
+def _lay_yahoo(ma_chung_khoan: str, t1: int, t2: int) -> pd.Series:
+    """Tải giá đóng cửa hàng ngày từ Yahoo Finance."""
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{ma_chung_khoan}"
+        f"?period1={t1}&period2={t2}&interval=1d"
+    )
+    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
+    r.raise_for_status()
+    pts = r.json()["chart"]["result"][0]
+    idx = pd.to_datetime(pts["timestamp"], unit="s").normalize()
+    val = pts["indicators"]["quote"][0]["close"]
+    return pd.to_numeric(pd.Series(val, index=idx), errors="coerce").dropna()
+
 
 def main():
-    os.makedirs(DATA_DIR, exist_ok=True)
-    
-    year = 2024
-    
-    # Tải 6 tháng đầu năm 2024 (Pandas sẽ chỉ dùng tháng 1, PySpark dùng cả 6 tháng)
-    print("Bắt đầu tải dữ liệu NYC Taxi (tháng 1 đến tháng 6 năm 2024)...")
-    for month in range(1, 7):
-        url = BASE_URL.format(year=year, month=month)
-        filename = f"yellow_tripdata_{year}-{month:02d}.parquet"
-        filepath = os.path.join(DATA_DIR, filename)
-        
-        download_file(url, filepath)
-        
-    print("\nHoàn tất tải dữ liệu!")
+    hom_nay  = datetime.utcnow()
+    ngay_dau = hom_nay.replace(year=hom_nay.year - SO_NAM)
+    t1 = int(ngay_dau.timestamp())
+    t2 = int(hom_nay.timestamp())
+
+    print(f"Đang tải dữ liệu: {ngay_dau.date()} → {hom_nay.date()} ...")
+
+    vang_usd = _lay_yahoo("GC=F",      t1, t2)   # Giá vàng USD/oz
+    ti_gia   = _lay_yahoo("USDVND=X",  t1, t2)   # Tỷ giá VND/USD
+
+    # Tính giá VNĐ/lượng  =  (USD/oz) × (VND/USD) × (oz/lượng)
+    hop     = pd.concat([vang_usd.rename("vang"), ti_gia.rename("vnd")], axis=1).dropna()
+    gia_vnd = hop["vang"] * OZ_TREN_LUONG * hop["vnd"]
+
+    df = gia_vnd.reset_index()
+    df.columns = ["Ngay", "Gia_TrungBinh"]
+    df["Gia_Mua"] = df["Gia_TrungBinh"] * 1.005    # ước tính spread ±0.5%
+    df["Gia_Ban"] = df["Gia_TrungBinh"] * 0.995
+    df["Nguon"]   = "Yahoo Finance – GC=F × USDVND (VNĐ/lượng)"
+
+    # Chuẩn hoá
+    df["Ngay"] = pd.to_datetime(df["Ngay"]).dt.strftime("%Y-%m-%d")
+    df["Nam"]  = pd.to_datetime(df["Ngay"]).dt.year
+    df = df[["Ngay", "Nam", "Gia_Mua", "Gia_Ban", "Gia_TrungBinh", "Nguon"]]
+
+    os.makedirs("data", exist_ok=True)
+    df.to_csv(FILE_CSV, index=False, encoding="utf-8-sig")
+
+    print(f"✓ Đã lưu : {FILE_CSV}")
+    print(f"  Số ngày : {len(df):,}")
+    print(f"  Từ ngày : {df['Ngay'].min()}  →  {df['Ngay'].max()}")
+    print(f"  Giá gần nhất:")
+    print(f"    Mua : {df['Gia_Mua'].iloc[-1]:>15,.0f} VNĐ/lượng")
+    print(f"    Bán : {df['Gia_Ban'].iloc[-1]:>15,.0f} VNĐ/lượng")
+
 
 if __name__ == "__main__":
     main()

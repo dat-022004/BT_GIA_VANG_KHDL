@@ -11,7 +11,6 @@ services:
       - '7077:7077'
     volumes:
       - ./data:/opt/spark-data
-      - ./spark_analysis.py:/opt/spark_analysis.py
 
   spark-worker-1:
     image: apache/spark:3.5.1
@@ -32,3 +31,23 @@ services:
     command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077", "--webui-port", "8082", "--cores", "2", "--memory", "2G"]
     volumes:
       - ./data:/opt/spark-data
+
+  jupyter:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    container_name: jupyter
+    hostname: jupyter
+    depends_on:
+      - spark-master
+    ports:
+      - '8888:8888'
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=vang2024
+      - SPARK_MASTER=spark://spark-master:7077
+    volumes:
+      - ./data:/opt/spark-data
+      - ./thuyettrinh:/home/jovyan/work
+    command: >
+      start-notebook.sh
+      --NotebookApp.token='vang2026'
+      --NotebookApp.ip='0.0.0.0'
