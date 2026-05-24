@@ -1,6 +1,6 @@
-# Hệ thống phân tích giá vàng bằng PySpark
-Link Youtube: https://youtu.be/uiCf-Wzj7do?si=RHPb-GC4a4ObTC27
-linK Slides : https://www.canva.com/design/DAHJD6UTypE/I5DQjYtD-KU12NH2fqjOXg/edit
+# Hệ thống phân tích giá vàng bằng PySpark  
+Link Youtube: https://youtu.be/uiCf-Wzj7do?si=RHPb-GC4a4ObTC27  
+linK Slides : https://www.canva.com/design/DAHJD6UTypE/I5DQjYtD-KU12NH2fqjOXg/edit  
 Repository này chứa một bài thực hành so sánh hai hướng xử lý dữ liệu:
 
 - `PySpark` cho xử lý phân tán với Docker Spark Cluster.
