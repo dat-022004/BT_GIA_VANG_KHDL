@@ -20,7 +20,7 @@ Repository này chứa một bài thực hành so sánh hai hướng xử lý d�
 - `spark-worker-2`: Spark worker thứ hai, Web UI tại `8082`.
 - `jupyter`: Jupyter Lab tại `http://localhost:8888/lab`.
 
-Token Jupyter trong file compose hiện tại là `vang2024`.
+Token Jupyter trong file compose hiện tại là `vang2026`.
 
 ## 2. Yêu cầu cài đặt
 
@@ -31,13 +31,13 @@ Token Jupyter trong file compose hiện tại là `vang2024`.
 Nếu chạy trên Windows, nên mở PowerShell hoặc terminal VS Code ở thư mục gốc của dự án:
 
 ```powershell
-cd "E:\hoctap\khoa_hoc_MT\thuc_hanh_1 - Copy"
+cd "E:\...
 ```
 
 Nếu chạy từ WSL, đường dẫn tương đương là:
 
 ```bash
-cd "/mnt/e/hoctap/khoa_hoc_MT/thuc_hanh_1 - Copy"
+cd "/mnt/e/...
 ```
 
 ## 3. Cài đặt môi trường Python
@@ -71,13 +71,12 @@ python download_data.py
 Để phục vụ so sánh Pandas vs Spark, script có thể tạo dataset synthetic kích thước lớn:
 
 ```powershell
-python download_data.py --benchmark-rows 40000000
+python download_data.py 
 ```
 
 Kết quả đầu ra:
 
 - `data/gold_prices_all.csv`
-- `data/gold_prices_benchmark.parquet`
 
 ## 5. Khởi động hệ thống bằng Docker
 
@@ -110,9 +109,7 @@ docker logs jupyter
 
 Notebook chính nằm trong `thuyettrinh/`.
 
-- `thuyettrinh/pandas_analysis.ipynb`: phân tích bằng Pandas.
 - `thuyettrinh/spark_analysis.ipynb`: phân tích bằng PySpark.
-- `thuyettrinh/chuong3.ipynb`: nội dung thuyết trình / lý thuyết.
 
 Trong Jupyter Lab:
 
@@ -123,7 +120,6 @@ Trong Jupyter Lab:
 
 ### Lưu ý đường dẫn dữ liệu
 
-- Notebook Pandas và Spark nên đọc file bằng đường dẫn tương đối lên thư mục gốc, ví dụ `../data/gold_prices_benchmark.parquet`.
 - Nếu mở notebook từ thư mục `thuyettrinh/`, đường dẫn `data/...` sẽ dễ bị sai.
 
 ## 7. Kết quả đạt được
@@ -132,23 +128,7 @@ Trong Jupyter Lab:
 
 - Đã tải dữ liệu giá vàng lịch sử vào `data/gold_prices_all.csv`.
 
-### 7.2 Kết quả Pandas
-
-Notebook Pandas thực hiện:
-
-- nạp dữ liệu vào RAM bằng `pd.read_parquet()`
-- làm sạch dữ liệu
-- tính `daily_return_pct`
-- group by theo tháng
-- xuất bảng thống kê và biểu đồ
-
-Điểm chính:
-
-- phù hợp khi dữ liệu vừa và nhỏ
-- thao tác đơn giản, dễ debug
-- phụ thuộc mạnh vào RAM máy local
-
-### 7.3 Kết quả PySpark
+### 7.2 Kết quả PySpark
 
 Notebook Spark thực hiện:
 
@@ -186,7 +166,7 @@ Notebook Spark thực hiện:
 ## 9. Tóm tắt nhanh lệnh sử dụng
 
 ```powershell
-cd "E:\hoctap\khoa_hoc_MT\thuc_hanh_1 - Copy"
+cd "E:\...
 docker-compose up -d
 docker logs jupyter
 ```
