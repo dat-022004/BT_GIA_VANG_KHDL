@@ -8,7 +8,7 @@ Repository này chứa một bài thực hành so sánh hai hướng xử lý d�
 
 ## 1. Cấu trúc hệ thống
 
-- `download_data.py`: tải dữ liệu giá vàng và tạo file benchmark lớn.
+- `download_data.py`: tải dữ liệu giá vàng .
 - `docker-compose.yml`: dựng cụm Spark gồm `spark-master`, `spark-worker-1`, `spark-worker-2` và `jupyter`.
 - `data/`: chứa dữ liệu đầu vào và dữ liệu benchmark.
 - `thuyettrinh/`: chứa notebook phân tích.
